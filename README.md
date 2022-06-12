@@ -47,7 +47,7 @@ return [
     ],
 ];
 ```
-Simply make a modification to the driver value:
+Simply make a modification to the `driver` value and add a `dir_name` property:
 ```php
 return [
     ....
