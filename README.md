@@ -1,19 +1,19 @@
-# Laravel Storage Virtual File System Adapter
+# Laravel Virtual Storage Filesystem Adapter
 Sometimes, when we are testing, it would be very nice to just easily swap out the various `Storage:disk()` calls with a
 virtual files system like `mikey179/vfsStream`.
 
 ## Installation
 
 ```
-composer require stechstudio/laravel-vfs-adapter
+composer require --dev hallodanny/laravel-virtual-storage
 ```
 Then register the provider in your `App\Providers\AppServiceProvider` like so:
 ```php
 public function register()
 {
-    if ($this->app->environment() === 'testing') {
-        if (class_exists(VfsFilesystemServiceProvider::class)) {
-            $this->app->register(VfsFilesystemServiceProvider::class);
+    if ($this->app->environment('testing')) {
+        if (class_exists(VirtualFilesystemServiceProvider::class)) {
+            $this->app->register(VirtualFilesystemServiceProvider::class);
         }
     }
 }
@@ -47,7 +47,7 @@ return [
     ],
 ];
 ```
-Simply make a few modifications:
+Simply make a modification to the driver value:
 ```php
 return [
     ....
@@ -55,8 +55,8 @@ return [
     'disks' => [
 
         'data' => [
-            'driver' => env('STORAGE_DATA_DRIVER', 'local'),
-            'root'   => env('STORAGE_DATA_DIR'),
+            'driver'  => env('STORAGE_DATA_DRIVER', 'local'),
+            'root'    => env('STORAGE_DATA_DIR'),
             'dir_name' => 'data'
         ],
 
@@ -66,7 +66,7 @@ return [
             'secret'   => env('S3_SECRET'),
             'region'   => env('S3_REGION'),
             'bucket'   => env('S3_DEVELOP_BUCKET'),
-            'dir_name' => 'archive'
+            'dir_name'  => 'archive'
         ]
     ],
 ];

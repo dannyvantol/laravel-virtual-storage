@@ -1,144 +1,45 @@
-<?php namespace STS\Filesystem;
+<?php
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-use League\Flysystem\Adapter\Local;
+declare(strict_types=1);
+
+namespace HalloDanny\Filesystem;
+
+use InvalidArgumentException;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use SplFileInfo;
 
-/**
- * @property string $dirName
- * @property string $dir_name
- * @property int $dirPermissions
- * @property int $dir_permissions
- * @property array $dir_structure
- * @property int $writeFlags
- * @property int $write_flags
- * @property array $permissions
- * @property int $linkHandling
- * @property int $link_handling
- * @property array $dirStructure
- */
-class VirtualFilesystemAdapter extends Local {
+class VirtualFilesystemAdapter extends LocalFilesystemAdapter
+{
+    protected string $dirname;
 
-    /**
-     * This adapters configuration
-     * @var Collection
-     */
-    protected $config;
+    protected vfsStreamDirectory $vfsStreamDirectory;
 
-    /**
-     * Default Configuration
-     * @var array
-     */
-    protected $defaultConfig = [
-        'dir_name' => 'root',
-        'dir_permissions' => 0755,
-        'dir_structure' => [],
-        'write_flags' => LOCK_EX,
-        'link_handling' => self::DISALLOW_LINKS,
-        'permissions' => [
-            'file' => [
-                'public' => 0644,
-                'private' => 0600,
-            ],
-            'dir' => [
-                'public' => 0755,
-                'private' => 0700,
-            ]
-        ]
-    ];
-
-    /**
-     * @var vfsStreamDirectory
-     */
-    protected $vfsStreamDir;
-
-    /**
-     * VirtualFilesystemAdapter constructor!
-     * @param array $config
-     */
     public function __construct(array $config = [])
     {
-        $this->config = collect(array_replace_recursive($this->defaultConfig, $config));
-        $this->vfsStreamDir = vfsStream::setup($this->dirName, $this->dirPermissions, $this->dirStructure);
-        parent::__construct($this->vfsStreamDir->url(), $this->writeFlags, $this->linkHandling, $this->permissions);
-    }
-
-    /**
-     * Get a look at the current configuration
-     * @return Collection
-     */
-    public function getConfig()
-    {
-        return $this->config;
-    }
-
-    /**
-     * Get a look at the default configuration
-     * @return array
-     */
-    public function getDefaultConfig()
-    {
-        return $this->defaultConfig;
-    }
-
-    /**
-     * Magic Getter to access our
-     * @param $name
-     * @return mixed
-     */
-    public function __get($name)
-    {
-        $response = $this->config->get(Str::snake($name));
-
-        if (is_null($response)){
-            throw new \InvalidArgumentException(sprintf('%s is not a valid field.', $name));
+        if (!array_key_exists('dir_name', $config)) {
+            throw new InvalidArgumentException('Missing \'dirname\' key in $config');
         }
 
-        return $response;
+        $this->dirname = $config['dir_name'];
+        $this->vfsStreamDirectory = vfsStream::setup($this->dirname, 0755, []);
+        parent::__construct($this->vfsStreamDirectory->url(), null, LOCK_SH);
     }
 
-    /**
-     * @return vfsStreamDirectory
-     */
-    public function getVfsStreamDir()
+    protected function ensureDirectoryExists(string $dirname, int $visibility): void
     {
-        return $this->vfsStreamDir;
-    }
-
-    /**
-     * Ensure the root directory exists. Because we are using vfs, if this is the root
-     * then just go ahead and return. Otherwise, carry on as usual.
-     *
-     * @param string $path root directory path
-     * @return void
-     * @throws \Exception in case the root directory can not be created
-     */
-    protected function ensureDirectory($path)
-    {
-        if ($path === $this->dirName){
-            // @codeCoverageIgnoreStart
+        if ($dirname === $this->dirname) {
             return;
-            // @codeCoverageIgnoreEnd
         }
-        parent::ensureDirectory($path);
+        parent::ensureDirectoryExists($dirname, $visibility);
     }
 
-    /**
-     * vfsStream has issues with SplFileInfo::getRealPath(), so we will just use
-     * SplFileInfo::getPathname()
-     * @param SplFileInfo $file
-     */
-    protected function deleteFileInfoObject(SplFileInfo $file)
+    protected function deleteFileInfoObject(SplFileInfo $file): bool
     {
         if ($file->getType() === 'dir') {
-            rmdir($file->getPathname());
-
-            return;
+            return @rmdir($file->getPathname());
         }
-
-        unlink($file->getPathname());
+        return @unlink($file->getPathname());
     }
 }
