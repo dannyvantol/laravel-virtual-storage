@@ -1,0 +1,17 @@
+name: CI
+
+on: [ push ]
+
+jobs:
+    build-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v2
+
+            -   name: Install Composer dependencies
+                uses: php-actions/composer@v6
+
+            -   name: Run PHPUnit tests
+                uses: php-actions/phpunit@v3
