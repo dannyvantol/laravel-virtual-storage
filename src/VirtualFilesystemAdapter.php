@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HalloDanny\Filesystem;
 
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use org\bovigo\vfs\vfsStream;
@@ -18,13 +19,14 @@ class VirtualFilesystemAdapter extends LocalFilesystemAdapter
 
     public function __construct(array $config = [])
     {
-        if (!array_key_exists('dir_name', $config)) {
-            throw new InvalidArgumentException('Missing \'dirname\' key in $config');
-        }
-
-        $this->dirname = $config['dir_name'];
+        $this->dirname = Str::random(8);
         $this->vfsStreamDirectory = vfsStream::setup($this->dirname, 0755, []);
         parent::__construct($this->vfsStreamDirectory->url(), null, LOCK_SH);
+    }
+
+    final public function getBasePath(): string
+    {
+        return $this->vfsStreamDirectory->url();
     }
 
     protected function ensureDirectoryExists(string $dirname, int $visibility): void

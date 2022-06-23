@@ -47,7 +47,7 @@ return [
     ],
 ];
 ```
-Simply make a modification to the `driver` value and add a `dir_name` property:
+Simply make a modification to the `driver` property:
 ```php
 return [
     ....
@@ -56,8 +56,7 @@ return [
 
         'data' => [
             'driver'  => env('STORAGE_DATA_DRIVER', 'local'),
-            'root'    => env('STORAGE_DATA_DIR'),
-            'dir_name' => 'data'
+            'root'    => env('STORAGE_DATA_DIR')
         ],
 
         'archive' => [
@@ -65,15 +64,13 @@ return [
             'key'      => env('S3_KEY'),
             'secret'   => env('S3_SECRET'),
             'region'   => env('S3_REGION'),
-            'bucket'   => env('S3_DEVELOP_BUCKET'),
-            'dir_name'  => 'archive'
+            'bucket'   => env('S3_DEVELOP_BUCKET')
         ]
     ],
 ];
 
 ```
-The `dir_name` determines the root directory of the vfsStream for that particular `Storage::disk()`, I like to name it
-something relative to the actual `disk` name. Setting up the driver with `env()` allows us to default to our standard drivers
+Setting up the driver with `env()` allows us to default to our standard drivers
 or allow us to override that in `phpunit.xml` to switch over to the virtual filesystem driver.
 
 Now, in your `phpunit.xml` add:
